@@ -6,8 +6,8 @@
   - You have to make DB in your local machine
   - Copy '.env.example' to '.env' and change variable values with your local machine settings
 
-## Migrations
+## Migrations (using knex dependecy) 
   - Open your terminal in root project folder
   - type 'npm run knex migrate:latest'
   ### Note:
-  - because libraries knex is install locally (for my local machine), you have to add 'knex' on scripts section in 'package.json'
+  - because knex dependecy is install locally in project not global (for my local machine), you have to add 'knex' on scripts section in 'package.json'
