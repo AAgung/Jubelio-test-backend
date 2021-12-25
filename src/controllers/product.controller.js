@@ -21,6 +21,7 @@ const getProduct = async (request, hapi) => {
       data: result.rowCount > 0 ? result.rows : []
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
@@ -61,6 +62,7 @@ const createProduct = async (request, hapi) => {
       data: payload
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
@@ -84,6 +86,7 @@ const createProduct = async (request, hapi) => {
       data: result.rowCount == 1 ? result.rows[0] : result.rows
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
@@ -136,6 +139,7 @@ const createProduct = async (request, hapi) => {
       data: payload
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
@@ -168,6 +172,7 @@ const createProduct = async (request, hapi) => {
       data: null
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
