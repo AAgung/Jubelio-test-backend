@@ -1,4 +1,5 @@
 const Hapi = require('@hapi/hapi');
+const Joi = require('@hapi/joi');
 
 require('dotenv').config();
 
@@ -39,6 +40,22 @@ const init = async () => {
         output: 'file',
         parse: true,
         multipart: true,
+      },
+      validate: {
+        payload: Joi.object({
+          sku: Joi.string().min(5).required(),
+          name: Joi.string().min(3).required(),
+          price: Joi.number().required(),
+          description: Joi.optional(),
+          image: Joi.optional(),
+        }),
+        failAction: (request, hapi, error) => {
+          return hapi.response({
+            success: false,
+            message: `Validation error`,
+            data: error.details
+          }).takeover().code(400);
+        }
       }
     },
     handler: productController.createProduct
@@ -60,6 +77,22 @@ const init = async () => {
         output: 'file',
         parse: true,
         multipart: true,
+      },
+      validate: {
+        payload: Joi.object({
+          sku: Joi.string().min(5).required(),
+          name: Joi.string().min(3).required(),
+          price: Joi.number().required(),
+          description: Joi.optional(),
+          image: Joi.optional(),
+        }),
+        failAction: (request, hapi, error) => {
+          return hapi.response({
+            success: false,
+            message: `Validation error`,
+            data: error.details
+          }).takeover().code(400);
+        }
       }
     },
     handler: productController.updateProduct
