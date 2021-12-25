@@ -1,5 +1,7 @@
 const Hapi = require('@hapi/hapi');
 const Joi = require('@hapi/joi');
+const Inert = require('@hapi/inert');
+const Path = require('path');
 
 require('dotenv').config();
 
@@ -9,7 +11,24 @@ const productController = require('./src/controllers/product.controller');
 const init = async () => {
   const server = new Hapi.server({
     port: process.env.APP_PORT,
-    host: 'localhost'
+    host: 'localhost',
+    routes: {
+      files: {
+        relativeTo: Path.join(__dirname, 'public')
+      }
+    }
+  });
+
+  await server.register(Inert);
+
+  server.route({
+    method: 'GET',
+    path: '/{param*}',
+    handler: {
+      directory: {
+          path: '.'
+      }
+    }
   });
 
   server.route({
@@ -37,7 +56,7 @@ const init = async () => {
     path: '/products',
     config: {
       payload: {
-        output: 'file',
+        output: 'stream',
         parse: true,
         multipart: true,
       },
@@ -74,7 +93,7 @@ const init = async () => {
     path: '/products/{sku}',
     config: {
       payload: {
-        output: 'file',
+        output: 'stream',
         parse: true,
         multipart: true,
       },

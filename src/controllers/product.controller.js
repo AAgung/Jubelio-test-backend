@@ -1,6 +1,7 @@
 const resultQuery = require('../queries/product');
 const axios = require('axios');
 const parseString = require('xml2js').parseString;
+const uploadHandler = require('../helpers/upload-file');
 
 /**
  * handler function using hapi.js
@@ -18,7 +19,12 @@ const getProduct = async (request, hapi) => {
     return hapi.response({
       success: true,
       message: 'Fetching data is success',
-      data: result.rowCount > 0 ? result.rows : []
+      data: result.rowCount > 0 
+        ? result.rows.map(product => {
+          product.image = product.image ? `${process.env.APP_URL}:${process.env.APP_PORT}/${product.image}` : null;
+          return product;
+        })
+        : []
     });
   } catch (error) {
     console.log(error);
@@ -43,7 +49,6 @@ const createProduct = async (request, hapi) => {
     description: request.payload.description ? request.payload.description : null,
     image: null
   }
-
   try {
     console.trace(`check sku ${payload.sku} exists`);
     let isSKUExists = await resultQuery.getProductByDynamicField(payload.sku, 'sku');
@@ -52,6 +57,15 @@ const createProduct = async (request, hapi) => {
         success: false,
         message: `SKU ${payload.sku} already exists, change to another SKU`
       }).code(400);
+    }
+
+    let payloadImage = request.payload.image;
+    if(payloadImage.hapi.filename != '') {
+      console.trace(`upload product image for sku ${payload.sku}`);
+      await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
+        .then((response) => {
+          payload.image = response.data.pathfile;
+        });
     }
 
     console.trace(`create product with sku ${payload.sku}`);
@@ -80,10 +94,22 @@ const createProduct = async (request, hapi) => {
   try {
     console.trace(`get product with sku ${sku}`);
     let result = await resultQuery.getProductByDynamicField(sku, 'sku');
+    if(result.rowCount <= 0) {
+      return hapi.response({
+        success: false,
+        message: `Product with SKU ${sku} not found`
+      }).code(400);
+    }
+
     return hapi.response({
       success: true,
       message: `Fetching data product ${sku} is success`,
-      data: result.rowCount == 1 ? result.rows[0] : result.rows
+      data: result.rowCount == 1 
+        ? result.rows.map(product => {
+          product.image = product.image ? `${process.env.APP_URL}:${process.env.APP_PORT}/${product.image}` : null;
+          return product;
+        })[0]
+        : null
     });
   } catch (error) {
     console.log(error);
@@ -131,6 +157,17 @@ const createProduct = async (request, hapi) => {
       }).code(400);
     }
 
+    payload.image = isOldSKUExists.rows[0].image;
+    let payloadImage = request.payload.image;
+    if(payloadImage.hapi.filename != '') {
+      console.trace(`upload product image for sku ${payload.sku}`);
+      uploadHandler.removeFile(payload.image);
+      await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
+        .then((response) => {
+          payload.image = response.data.pathfile;
+        });
+    }
+
     console.trace(payload.sku != oldSKU ? `update product with ${oldSKU} to new SKU ${payload.sku}` : `update product with ${payload.sku}`);
     let result = await resultQuery.updateProduct(payload, oldSKU);
     return hapi.response({
@@ -165,6 +202,7 @@ const createProduct = async (request, hapi) => {
       }).code(400);
     }
 
+    if(isSKUExists.rows[0].image) uploadHandler.removeFile(isSKUExists.rows[0].image);
     let result = await resultQuery.deleteProduct(sku);
     return hapi.response({
       success: true,
