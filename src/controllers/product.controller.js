@@ -1,5 +1,6 @@
 const resultQuery = require('../queries/product');
 const axios = require('axios');
+const parseString = require('xml2js').parseString;
 
 /**
  * handler function using hapi.js
@@ -173,6 +174,7 @@ const createProduct = async (request, hapi) => {
  */
 const importFromProductElevania = async (request, hapi) => {
   try {
+    let imported = false;
     await axios({
       method: 'get',
       url: process.env.ELEVANIA_API_URL + `/rest/prodservices/product/listing`,
@@ -181,15 +183,47 @@ const importFromProductElevania = async (request, hapi) => {
       },
     })
     .then(async (response) => {
-      let elevaniaData = response.data;
+      let elevaniaDataXML = response.data;
+      parseString(elevaniaDataXML, async (error, result) => {
+        if(error) {
+          return hapi.response({
+            success: false,
+            message: `Fetching data from elevania failed`
+          }).code(500);
+        }
+
+        // I assume this external API always return xml format value and never empty for the data 
+        let elevaniaData = result.Products.product;
+        if(elevaniaData.length > 0) {
+          imported = true;
+          for(product of elevaniaData) {
+            let productDataImported = {
+              sku: product.prdNo[0],
+              name: product.prdNm[0],
+              price: product.selPrc[0],
+            };
+
+            // check if sku is exists
+            let isSKUExists = await resultQuery.getProductByDynamicField(productDataImported.sku, 'sku');
+            if(isSKUExists.rowCount <= 0) {
+              resultQuery.createProduct(productDataImported);
+            } else {
+              productDataImported.image = isSKUExists.rows[0].image;
+              productDataImported.description = isSKUExists.rows[0].description;
+              resultQuery.updateProduct(productDataImported, productDataImported.sku);
+            }
+          }
+        }
+      });
     });
 
     return hapi.response({
       success: true,
-      message: 'Import data is success',
+      message: imported ? 'Data has been imported' : 'No data has been imported',
       data: []
     });
   } catch (error) {
+    console.log(error);
     return hapi.response({
       success: false,
       message: 'Internal server error'
