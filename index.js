@@ -13,6 +13,7 @@ const init = async () => {
     port: process.env.APP_PORT,
     host: 'localhost',
     routes: {
+      cors: true,
       files: {
         relativeTo: Path.join(__dirname, 'public')
       }

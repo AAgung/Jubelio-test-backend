@@ -12,6 +12,10 @@
   ### Note:
   - because knex dependecy is install locally in project not global (for my local machine), you have to add 'knex' on scripts section in 'package.json'
 
+## Run APP
+  1. Open your terminal in root project folder
+  2. type 'npm run dev' to start with nodemon or type 'npm run start' to start without nodemon
+
 # API Documentation using Postman
 Link: 
 File: Jubelio-test.postman_collection.json
