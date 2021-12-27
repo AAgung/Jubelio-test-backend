@@ -10,7 +10,7 @@
   1. Open your terminal in root project folder
   2. type 'npm run knex migrate:latest'
   ### Note:
-  - because knex dependecy is install locally in project not global (for my local machine), you have to add 'knex' on scripts section in 'package.json'
+  - because knex dependecy is install locally in project not global (for my local machine), i have to add 'knex' on scripts section in 'package.json'
 
 ## Run APP
   1. Open your terminal in root project folder
