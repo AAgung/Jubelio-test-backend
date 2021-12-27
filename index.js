@@ -16,8 +16,11 @@ const init = async () => {
       cors: true,
       files: {
         relativeTo: Path.join(__dirname, 'public')
+      },
+      payload: {
+        maxBytes: 104857600
       }
-    }
+    },
   });
 
   await server.register(Inert);

@@ -14,7 +14,7 @@ const getProduct = async (request, hapi) => {
   let page = request.query.page ? request.query.page : 1;
   let offset = page <= 1 ? 0 : (page - 1) * limit;
   try {
-    console.trace(`get ${limit} product on page ${page}`);
+    console.log(`get ${limit} product on page ${page}`);
     let result = await resultQuery.getProduct(limit, offset);
     return hapi.response({
       success: true,
@@ -50,7 +50,7 @@ const createProduct = async (request, hapi) => {
     image: null
   }
   try {
-    console.trace(`check sku ${payload.sku} exists`);
+    console.log(`check sku ${payload.sku} exists`);
     let isSKUExists = await resultQuery.getProductByDynamicField(payload.sku, 'sku');
     if(isSKUExists.rowCount > 0) {
       return hapi.response({
@@ -60,15 +60,17 @@ const createProduct = async (request, hapi) => {
     }
 
     let payloadImage = request.payload.image;
-    if(payloadImage.hapi.filename != '') {
-      console.trace(`upload product image for sku ${payload.sku}`);
-      await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
-        .then((response) => {
-          payload.image = response.data.pathfile;
-        });
+    if(payloadImage) {
+      if(payloadImage.hapi.filename != '') {
+        console.log(`upload product image for sku ${payload.sku}`);
+        await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
+          .then((response) => {
+            payload.image = response.data.pathfile;
+          });
+      }
     }
 
-    console.trace(`create product with sku ${payload.sku}`);
+    console.log(`create product with sku ${payload.sku}`);
     let result = await resultQuery.createProduct(payload);
     return hapi.response({
       success: true,
@@ -92,7 +94,7 @@ const createProduct = async (request, hapi) => {
  const getProductBySKU = async (request, hapi) => {
   let sku = request.params.sku;
   try {
-    console.trace(`get product with sku ${sku}`);
+    console.log(`get product with sku ${sku}`);
     let result = await resultQuery.getProductByDynamicField(sku, 'sku');
     if(result.rowCount <= 0) {
       return hapi.response({
@@ -138,7 +140,7 @@ const createProduct = async (request, hapi) => {
 
   try {
     // check is sku that will updated is exists
-    console.trace(`check product with sku that will updated (${oldSKU}) is exists`);
+    console.log(`check product with sku that will updated (${oldSKU}) is exists`);
     let isOldSKUExists = await resultQuery.getProductByDynamicField(oldSKU, 'sku');
     if(isOldSKUExists.rowCount <= 0) {
       return hapi.response({
@@ -148,7 +150,7 @@ const createProduct = async (request, hapi) => {
     }
 
     // check is sku that will updated is exists and if current sku is changed condition
-    console.trace(`check product with sku that will updated (${payload.sku}) is exists and if current sku is changed condition`);
+    console.log(`check product with sku that will updated (${payload.sku}) is exists and if current sku is changed condition`);
     let isSKUExists = await resultQuery.getProductByDynamicField(payload.sku, 'sku', 'update', oldSKU);
     if(isSKUExists.rowCount > 0) {
       return hapi.response({
@@ -159,16 +161,18 @@ const createProduct = async (request, hapi) => {
 
     payload.image = isOldSKUExists.rows[0].image;
     let payloadImage = request.payload.image;
-    if(payloadImage.hapi.filename != '') {
-      console.trace(`upload product image for sku ${payload.sku}`);
-      uploadHandler.removeFile(payload.image);
-      await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
-        .then((response) => {
-          payload.image = response.data.pathfile;
-        });
+    if(payloadImage) {
+      if(payloadImage.hapi.filename != '') {
+        console.log(`upload product image for sku ${payload.sku}`);
+        uploadHandler.removeFile(payload.image);
+        await uploadHandler.handleFileUpload(request.payload.image, './public/uploads/product')
+          .then((response) => {
+            payload.image = response.data.pathfile;
+          });
+      }
     }
 
-    console.trace(payload.sku != oldSKU ? `update product with ${oldSKU} to new SKU ${payload.sku}` : `update product with ${payload.sku}`);
+    console.log(payload.sku != oldSKU ? `update product with ${oldSKU} to new SKU ${payload.sku}` : `update product with ${payload.sku}`);
     let result = await resultQuery.updateProduct(payload, oldSKU);
     return hapi.response({
       success: true,
@@ -193,7 +197,7 @@ const createProduct = async (request, hapi) => {
  const deleteProduct = async (request, hapi) => {
   let sku = request.params.sku;
   try {
-    console.trace(`check product with sku that will deleted (${sku}) is exists`);
+    console.log(`check product with sku that will deleted (${sku}) is exists`);
     let isSKUExists = await resultQuery.getProductByDynamicField(sku, 'sku');
     if(isSKUExists.rowCount <= 0) {
       return hapi.response({
@@ -226,7 +230,7 @@ const createProduct = async (request, hapi) => {
 const importFromProductElevania = async (request, hapi) => {
   try {
     let imported = false;
-    console.trace(`fetching product from elevania`);
+    console.log(`fetching product from elevania`);
     await axios({
       method: 'get',
       url: process.env.ELEVANIA_API_URL + `/rest/prodservices/product/listing`,
@@ -236,7 +240,7 @@ const importFromProductElevania = async (request, hapi) => {
     })
     .then(async (response) => {
       let elevaniaDataXML = response.data;
-      console.trace(`parse data xml format from elevania to array javascript`);
+      console.log(`parse data xml format from elevania to array javascript`);
       parseString(elevaniaDataXML, async (error, result) => {
         if(error) {
           return hapi.response({
@@ -257,7 +261,7 @@ const importFromProductElevania = async (request, hapi) => {
             };
 
             // check if sku is exists
-            console.trace(`create or update imported data to database for sku ${productDataImported.sku}`);
+            console.log(`create or update imported data to database for sku ${productDataImported.sku}`);
             let isSKUExists = await resultQuery.getProductByDynamicField(productDataImported.sku, 'sku');
             if(isSKUExists.rowCount <= 0) {
               resultQuery.createProduct(productDataImported);

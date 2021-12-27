@@ -2,7 +2,7 @@ const db = require('../../config/database');
 const table = 'products';
 
 const getProduct = async (limit, offset) => {
-  let query = `SELECT sku, name, price, image, description FROM ${table} ORDER BY sku ASC LIMIT $1 OFFSET $2`;
+  let query = `SELECT sku, name, price, image, description FROM ${table} ORDER BY name ASC LIMIT $1 OFFSET $2`;
   return await db.query(query, [limit, offset]);
 }
 

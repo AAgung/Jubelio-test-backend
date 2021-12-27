@@ -17,8 +17,10 @@ const handleFileUpload = (file, path) => {
 }
 
 const removeFile = (path) => {
-  path = path.replace('./', './public/');
-  fs.unlink(path, () => {});
+  if(path) {
+    path = path.replace('./', './public/');
+    fs.unlink(path, () => {});
+  }
 }
 
 module.exports = {
