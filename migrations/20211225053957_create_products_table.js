@@ -4,7 +4,7 @@ exports.up = function(knex) {
     t.increments('id').unsigned().primary();
     t.string('sku').unique();
     t.string('name').notNull().index();
-    t.decimal('price').defaultTo('0.00').index();
+    t.decimal('price', 21, 2).defaultTo('0.00').index();
     t.text('description').nullable();
     t.text('image').nullable();
     t.timestamp('createdAt').defaultTo(knex.fn.now());
