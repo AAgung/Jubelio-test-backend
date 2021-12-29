@@ -2,6 +2,7 @@ const Hapi = require('@hapi/hapi');
 const Joi = require('@hapi/joi');
 const Inert = require('@hapi/inert');
 const Path = require('path');
+const AuthBearer = require('hapi-auth-bearer-token');
 
 require('dotenv').config();
 
@@ -23,8 +24,20 @@ const init = async () => {
     },
   });
 
-  await server.register(Inert);
+  // config auth with bearer token
+  // comparing token with app key in .env file for now
+  await server.register(AuthBearer);
+  server.auth.strategy('simple', 'bearer-access-token', {
+    validate: async (request, token, hapi) => {
+      const isValid = token === process.env.APP_KEY;
+      const credentials = { token };
+      const artifacts = { test: 'info' };
+      return { isValid, credentials, artifacts };
+    }
+  });
 
+  // config inert to allow static file
+  await server.register(Inert);
   server.route({
     method: 'GET',
     path: '/{param*}',
@@ -35,9 +48,13 @@ const init = async () => {
     }
   });
 
+  // route app 
   server.route({
     method: 'GET',
     path: '/',
+    config: {
+      auth: 'simple'
+    },
     handler: async (request, hapi) => {
       return `<h1>Welcome to Jubelio Test Api</h1>`;
     }
@@ -51,6 +68,9 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/products',
+    config: {
+      auth: 'simple'
+    },
     handler: productController.getProduct
   });
 
@@ -59,6 +79,7 @@ const init = async () => {
     method: 'POST',
     path: '/products',
     config: {
+      auth: 'simple',
       payload: {
         output: 'stream',
         parse: true,
@@ -79,7 +100,7 @@ const init = async () => {
             data: error.details
           }).takeover().code(400);
         }
-      }
+      },
     },
     handler: productController.createProduct
   });
@@ -88,6 +109,9 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/products/{sku}',
+    config: {
+      auth: 'simple'
+    },
     handler: productController.getProductBySKU
   });
 
@@ -96,6 +120,7 @@ const init = async () => {
     method: 'PUT',
     path: '/products/{sku}',
     config: {
+      auth: 'simple',
       payload: {
         output: 'stream',
         parse: true,
@@ -125,6 +150,9 @@ const init = async () => {
   server.route({
     method: 'DELETE',
     path: '/products/{sku}',
+    config: {
+      auth: 'simple'
+    },
     handler: productController.deleteProduct
   });
 
@@ -132,6 +160,9 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/products/import-from-elevania',
+    config: {
+      auth: 'simple'
+    },
     handler: productController.importFromProductElevania
   });
 
