@@ -2,7 +2,7 @@ const db = require('../../config/database');
 const table = 'products';
 
 const getProduct = async (limit, offset) => {
-  let query = `SELECT sku, name, price, image, description FROM ${table} ORDER BY name ASC LIMIT $1 OFFSET $2`;
+  let query = `SELECT sku, name, price, image, description FROM ${table} ORDER BY "updatedAt" DESC, price ASC, name ASC LIMIT $1 OFFSET $2`;
   return await db.query(query, [limit, offset]);
 }
 
@@ -28,7 +28,7 @@ const createProduct = async (obj) => {
 }
 
 const updateProduct = async (obj, oldSKU) => {
-  let query = `UPDATE ${table} SET sku = $1, name = $2, price = $3, image = $4, description = $5 WHERE sku = $6`;
+  let query = 'UPDATE products SET sku = $1, name = $2, price = $3, image = $4, description = $5, "updatedAt" = NOW() WHERE sku = $6';
   return await db.query(query, [
     obj.sku, 
     obj.name, 

@@ -21,7 +21,7 @@ const getProduct = async (request, hapi) => {
       message: 'Fetching data is success',
       data: result.rowCount > 0 
         ? result.rows.map(product => {
-          product.image = product.image ? `${process.env.APP_URL}:${process.env.APP_PORT}/${product.image}` : null;
+          product.image = product.image ? uploadHandler.getFile(product.image) : null;
           return product;
         })
         : []
@@ -108,7 +108,7 @@ const createProduct = async (request, hapi) => {
       message: `Fetching data product ${sku} is success`,
       data: result.rowCount == 1 
         ? result.rows.map(product => {
-          product.image = product.image ? `${process.env.APP_URL}:${process.env.APP_PORT}/${product.image}` : null;
+          product.image = product.image ? uploadHandler.getFile(product.image) : null;
           return product;
         })[0]
         : null
@@ -254,22 +254,30 @@ const importFromProductElevania = async (request, hapi) => {
         if(elevaniaData.length > 0) {
           imported = true;
           for(product of elevaniaData) {
-            let productDataImported = {
-              sku: product.prdNo[0],
-              name: product.prdNm[0],
-              price: product.selPrc[0],
-            };
-
-            // check if sku is exists
-            console.log(`create or update imported data to database for sku ${productDataImported.sku}`);
-            let isSKUExists = await resultQuery.getProductByDynamicField(productDataImported.sku, 'sku');
-            if(isSKUExists.rowCount <= 0) {
-              resultQuery.createProduct(productDataImported);
-            } else {
-              productDataImported.image = isSKUExists.rows[0].image;
-              productDataImported.description = isSKUExists.rows[0].description;
-              resultQuery.updateProduct(productDataImported, productDataImported.sku);
-            }
+            getProductBySKUfromElevania(product.prdNo[0])
+              .then(
+                async (product) => {
+                  let productDataImported = {
+                    sku: product.prdNo[0],
+                    name: product.prdNm[0],
+                    price: product.selPrc[0],
+                    description: product.htmlDetail ? product.htmlDetail[0] : null,
+                    image: product.prdImage01 ? product.prdImage01[0] : null,
+                  };
+      
+                  // check if sku is exists
+                  console.log(`create or update imported data to database for sku ${productDataImported.sku}`);
+                  let isSKUExists = await resultQuery.getProductByDynamicField(productDataImported.sku, 'sku');
+                  if(isSKUExists.rowCount <= 0) {
+                    resultQuery.createProduct(productDataImported);
+                  } else {
+                    resultQuery.updateProduct(productDataImported, productDataImported.sku);
+                  }
+                },
+                (error) => {
+                  console.log(error);
+                }
+              );
           }
         }
       });
@@ -287,6 +295,46 @@ const importFromProductElevania = async (request, hapi) => {
       message: 'Internal server error'
     });
   }
+}
+
+/**
+* handler no exporting function using hapi.js
+* IMPORT Product Detail from ELEVANIA
+* return Promise
+*/
+const getProductBySKUfromElevania = async (sku, hapi) => {
+  return new Promise((resolve, reject) => {
+    try {
+      axios({
+        method: 'get',
+        url: process.env.ELEVANIA_API_URL + `/rest/prodservices/product/details/${sku}`,
+        headers: {
+          'openapikey': process.env.ELEVANIA_API_KEY
+        },
+      })
+      .then(async (response) => {
+        let elevaniaDataXML = response.data;
+        console.log(`parse data xml format from elevania with sku ${sku} to object javascript`);
+        parseString(elevaniaDataXML, async (error, result) => {
+          let elevaniaData = result.Product;
+          if(elevaniaData) {  
+            resolve(elevaniaData)
+          } else {
+            reject({
+              success: false,
+              message: `Fetching data from elevania failed`
+            });
+          }
+        });
+      });
+    } catch (error) {
+      console.log(error);
+      reject({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  });  
 }
 
 module.exports = {

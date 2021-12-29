@@ -23,7 +23,16 @@ const removeFile = (path) => {
   }
 }
 
+const getFile = (path) => {
+  if(path) {
+    if(path.includes('http://image.elevenia.co.id')) return path;
+    return `${process.env.APP_URL}:${process.env.APP_PORT}/${path}`;
+  }
+  return path;
+} 
+
 module.exports = {
   handleFileUpload,
-  removeFile
+  removeFile,
+  getFile
 };
