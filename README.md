@@ -28,4 +28,4 @@ File: Jubelio-test.postman_collection.json
 ## Testing
 I'm using Hapi Lab to testing, and install locally in project, to run the testing:
 1. Prefer using terminal or git bash because in CMD is not runnable
-2. type ./node-modules/@hapi/lab/bin/lab -v **/*tes.js to run migration
+2. type ./node-modules/@hapi/lab/bin/lab -v **/*test.js to run migration
