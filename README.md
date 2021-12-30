@@ -24,3 +24,8 @@ File: Jubelio-test.postman_collection.json
 1. you must install Postman first
 2. import file 'Jubelio-test.postman_collection.json' to your postman collection
 3. change 'base_url' variable on your setting Variables Collection (default: http://localhost:5000)
+
+## Testing
+I'm using Hapi Lab to testing, and install locally in project, to run the testing:
+1. Prefer using terminal or git bash because in CMD is not runnable
+2. type ./node-modules/@hapi/lab/bin/lab -v **/*tes.js to run migration
