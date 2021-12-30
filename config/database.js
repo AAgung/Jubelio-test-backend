@@ -2,11 +2,11 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.NODE_ENV == 'test' ? process.env.DATABASE_TEST_URL : process.env.DATABASE_URL
 });
 
 pool.on('connect', () => {
-  console.log('Database is connected');
+  if(process.env.NODE_ENV == 'development') console.log('Database is connected');
 });
 
 module.exports = {
